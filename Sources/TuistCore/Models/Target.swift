@@ -77,7 +77,7 @@ public struct Target: Equatable, Hashable {
         [.dynamicLibrary, .staticLibrary, .framework, .staticFramework].contains(product)
     }
 
-    /// Target can link staitc products (e.g. an app can link a staticLibrary)
+    /// Target can link static products (e.g. an app can link a staticLibrary)
     public func canLinkStaticProducts() -> Bool {
         [
             .framework,
