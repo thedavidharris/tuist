@@ -6,10 +6,14 @@ import TSCBasic
 struct BuildCommand: ParsableCommand {
     static var configuration: CommandConfiguration {
         CommandConfiguration(commandName: "build",
-                             abstract: "Builds a project target")
+                             abstract: "Builds a project")
     }
+    
+    @Argument(default: nil,
+              help: "The scheme to be built. By default it builds all the buildable schemes of the project in the current directory")
+    var scheme: String?
 
     func run() throws {
-        try BuildService().run()
+        try BuildService().run(scheme: scheme)
     }
 }

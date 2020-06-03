@@ -2,7 +2,7 @@ import Foundation
 import TSCBasic
 import TuistSupport
 
-public struct Project: Equatable, CustomStringConvertible {
+public struct Project: Hashable, Equatable, CustomStringConvertible {
     public static func == (lhs: Project, rhs: Project) -> Bool {
         lhs.path == rhs.path &&
             lhs.name == rhs.name &&
@@ -82,7 +82,7 @@ public struct Project: Equatable, CustomStringConvertible {
         self.filesGroup = filesGroup
         self.additionalFiles = additionalFiles
     }
-
+    
     /// It returns the project targets sorted based on the target type and the dependencies between them.
     /// The most dependent and non-tests targets are sorted first in the list.
     ///
@@ -122,6 +122,12 @@ public struct Project: Equatable, CustomStringConvertible {
 
     public var description: String {
         name
+    }
+    
+    // MARK: - Hashable
+    
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(self.path)
     }
 
     // MARK: - Public
