@@ -1,4 +1,6 @@
 import Foundation
+import RxSwift
+import TuistCore
 import TuistSupport
 import XCTest
 
@@ -41,15 +43,182 @@ final class BuildServiceTests: TuistUnitTestCase {
         subject = nil
     }
 
-    func test_run_when_generate_is_true() throws {
-        XCTFail("TODO")
-    }
+    func test_run_when_the_project_should_be_generated() throws {
+        // Given
+        let path = try temporaryPath()
+        let workspacePath = path.appending(component: "App.xcworkspace")
+        let graph = Graph.test()
+        let scheme = Scheme.test()
+        let target = Target.test()
+        let buildArguments: [XcodeBuildArgument] = [.sdk("iphoneos")]
 
-    func test_run_when_thereisnt_a_workspace_and_generate_is_false() throws {
-        XCTFail("TODO")
+        projectGenerator.generateWithGraphStub = { _path, _projectOnly in
+            XCTAssertEqual(_path, path)
+            XCTAssertFalse(_projectOnly)
+            return (path, graph)
+        }
+        buildgraphInspector.buildableSchemesStub = { _ in
+            [scheme]
+        }
+        buildgraphInspector.buildableTargetStub = { _scheme, _ in
+            XCTAssertEqual(_scheme, scheme)
+            return target
+        }
+        buildgraphInspector.workspacePathStub = { _path in
+            XCTAssertEqual(_path, path)
+            return workspacePath
+        }
+        buildgraphInspector.buildArgumentsStub = { _target in
+            XCTAssertEqual(_target, target)
+            return buildArguments
+        }
+        xcodebuildController.buildStub = { _target, _scheme, _clean, _arguments in
+            XCTAssertEqual(_target, .workspace(workspacePath))
+            XCTAssertEqual(_scheme, scheme.name)
+            XCTAssertTrue(_clean)
+            XCTAssertEqual(_arguments, buildArguments)
+            return Observable.just(.standardOutput(.init(raw: "success", formatted: nil)))
+        }
+
+        // Then
+        try subject.run(schemeName: scheme.name, generate: true, path: path)
     }
 
     func test_run_when_the_project_is_already_generated() throws {
-        XCTFail("TODO")
+        // Given
+        let path = try temporaryPath()
+        let workspacePath = path.appending(component: "App.xcworkspace")
+        let graph = Graph.test()
+        let scheme = Scheme.test()
+        let target = Target.test()
+        let buildArguments: [XcodeBuildArgument] = [.sdk("iphoneos")]
+
+        projectGenerator.loadStub = { _path in
+            XCTAssertEqual(_path, path)
+            return graph
+        }
+        buildgraphInspector.buildableSchemesStub = { _ in
+            [scheme]
+        }
+        buildgraphInspector.buildableTargetStub = { _scheme, _ in
+            XCTAssertEqual(_scheme, scheme)
+            return target
+        }
+        buildgraphInspector.workspacePathStub = { _path in
+            XCTAssertEqual(_path, path)
+            return workspacePath
+        }
+        buildgraphInspector.buildArgumentsStub = { _target in
+            XCTAssertEqual(_target, target)
+            return buildArguments
+        }
+        xcodebuildController.buildStub = { _target, _scheme, _clean, _arguments in
+            XCTAssertEqual(_target, .workspace(workspacePath))
+            XCTAssertEqual(_scheme, scheme.name)
+            XCTAssertTrue(_clean)
+            XCTAssertEqual(_arguments, buildArguments)
+            return Observable.just(.standardOutput(.init(raw: "success", formatted: nil)))
+        }
+
+        // Then
+        try subject.run(schemeName: scheme.name, generate: false, path: path)
+    }
+
+    func test_run_only_cleans_the_first_time() throws {
+        // Given
+        let path = try temporaryPath()
+        let workspacePath = path.appending(component: "App.xcworkspace")
+        let graph = Graph.test()
+        let schemeA = Scheme.test(name: "A")
+        let schemeB = Scheme.test(name: "B")
+        let targetA = Target.test(name: "A")
+        let targetB = Target.test(name: "B")
+        let buildArguments: [XcodeBuildArgument] = [.sdk("iphoneos")]
+
+        projectGenerator.loadStub = { _path in
+            XCTAssertEqual(_path, path)
+            return graph
+        }
+        buildgraphInspector.buildableSchemesStub = { _ in
+            [schemeA, schemeB]
+        }
+        buildgraphInspector.buildableTargetStub = { _scheme, _ in
+            if _scheme == schemeA { return targetA }
+            else if _scheme == schemeB { return targetB }
+            else { XCTFail("unexpected scheme"); return targetA }
+        }
+        buildgraphInspector.workspacePathStub = { _path in
+            XCTAssertEqual(_path, path)
+            return workspacePath
+        }
+        buildgraphInspector.buildArgumentsStub = { _ in
+            buildArguments
+        }
+        xcodebuildController.buildStub = { _target, _scheme, _clean, _arguments in
+            XCTAssertEqual(_target, .workspace(workspacePath))
+            XCTAssertEqual(_arguments, buildArguments)
+
+            if _scheme == "A" {
+                XCTAssertEqual(_scheme, "A")
+                XCTAssertTrue(_clean)
+            } else if _scheme == "B" {
+                // When running the second scheme clean should be false
+                XCTAssertEqual(_scheme, "B")
+                XCTAssertFalse(_clean)
+            } else {
+                XCTFail("unexpected scheme \(_scheme)")
+            }
+            return Observable.just(.standardOutput(.init(raw: "success", formatted: nil)))
+        }
+
+        // Then
+        try subject.run(schemeName: nil, generate: false, path: path)
+    }
+
+    func test_run_only_runs_the_given_scheme_when_passed() throws {
+        // Given
+        let path = try temporaryPath()
+        let workspacePath = path.appending(component: "App.xcworkspace")
+        let graph = Graph.test()
+        let schemeA = Scheme.test(name: "A")
+        let schemeB = Scheme.test(name: "B")
+        let targetA = Target.test(name: "A")
+        let targetB = Target.test(name: "B")
+        let buildArguments: [XcodeBuildArgument] = [.sdk("iphoneos")]
+
+        projectGenerator.loadStub = { _path in
+            XCTAssertEqual(_path, path)
+            return graph
+        }
+        buildgraphInspector.buildableSchemesStub = { _ in
+            [schemeA, schemeB]
+        }
+        buildgraphInspector.buildableTargetStub = { _scheme, _ in
+            if _scheme == schemeA { return targetA }
+            else if _scheme == schemeB { return targetB }
+            else { XCTFail("unexpected scheme"); return targetA }
+        }
+        buildgraphInspector.workspacePathStub = { _path in
+            XCTAssertEqual(_path, path)
+            return workspacePath
+        }
+        buildgraphInspector.buildArgumentsStub = { _ in
+            buildArguments
+        }
+        xcodebuildController.buildStub = { _target, _scheme, _clean, _arguments in
+            XCTAssertEqual(_target, .workspace(workspacePath))
+            XCTAssertEqual(_arguments, buildArguments)
+
+            if _scheme == "A" {
+                XCTAssertEqual(_scheme, "A")
+                XCTAssertTrue(_clean)
+            } else {
+                XCTFail("unexpected scheme \(_scheme)")
+            }
+            return Observable.just(.standardOutput(.init(raw: "success", formatted: nil)))
+        }
+
+        // Then
+        try subject.run(schemeName: "A", generate: false, path: path)
     }
 }
