@@ -1,6 +1,7 @@
 import ArgumentParser
 import Foundation
 import TSCBasic
+import TuistSupport
 
 /// Command that builds a target from the project in the current directory.
 struct BuildCommand: ParsableCommand {
@@ -17,8 +18,20 @@ struct BuildCommand: ParsableCommand {
         help: "Force the generation of the project before building."
     )
     var generate: Bool
+    
+    @Option(
+        name: .shortAndLong,
+        help: "The path to the directory that contains the project to be built."
+    )
+    var path: String?
 
     func run() throws {
-        try BuildService().run(schemeName: scheme, generate: generate)
+        let absolutePath: AbsolutePath
+        if let path = path {
+            absolutePath = AbsolutePath(path)
+        } else {
+            absolutePath = FileHandler.shared.currentPath
+        }
+        try BuildService().run(schemeName: scheme, generate: generate, path: absolutePath)
     }
 }

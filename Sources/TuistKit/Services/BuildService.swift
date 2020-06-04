@@ -43,12 +43,12 @@ final class BuildService {
         self.buildGraphInspector = buildGraphInspector
     }
 
-    func run(schemeName: String?, generate: Bool) throws {
+    func run(schemeName: String?, generate: Bool, path: AbsolutePath) throws {
         let graph: Graph
-        if generate || buildGraphInspector.workspacePath(directory: FileHandler.shared.currentPath) == nil {
-            graph = try projectGenerator.generateWithGraph(path: FileHandler.shared.currentPath, projectOnly: false).1
+        if generate || buildGraphInspector.workspacePath(directory: path) == nil {
+            graph = try projectGenerator.generateWithGraph(path: path, projectOnly: false).1
         } else {
-            graph = try projectGenerator.load(path: FileHandler.shared.currentPath)
+            graph = try projectGenerator.load(path: path)
         }
 
         let buildableSchemes = buildGraphInspector.buildableSchemes(graph: graph)
@@ -58,7 +58,7 @@ final class BuildService {
         func buildScheme(scheme: Scheme) throws {
             logger.log(level: .notice, "Building scheme \(scheme.name)", metadata: .section)
             let buildableTarget = buildGraphInspector.buildableTarget(scheme: scheme, graph: graph)
-            let workspacePath = buildGraphInspector.workspacePath(directory: FileHandler.shared.currentPath)!
+            let workspacePath = buildGraphInspector.workspacePath(directory: path)!
             _ = try xcodebuildController.build(.workspace(workspacePath),
                                                scheme: scheme.name,
                                                clean: cleaned == false,

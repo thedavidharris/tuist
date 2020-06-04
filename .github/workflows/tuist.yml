@@ -75,6 +75,7 @@ jobs:
             'lint',
             'scaffold',
             'up',
+            'build',
           ]
     steps:
       - uses: actions/checkout@v1
