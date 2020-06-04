@@ -63,19 +63,18 @@ class ProjectGenerator: ProjectGenerating {
             throw ManifestLoaderError.manifestNotFound(path)
         }
     }
-    
+
     func load(path: AbsolutePath) throws -> Graph {
         let manifests = manifestLoader.manifests(at: path)
 
         if manifests.contains(.workspace) {
-            return try self.loadWorkspace(path: path).1
+            return try loadWorkspace(path: path).1
         } else if manifests.contains(.project) {
-            return try self.loadProject(path: path).1
+            return try loadProject(path: path).1
         } else {
             throw ManifestLoaderError.manifestNotFound(path)
         }
     }
-    
 
     private func generateProject(path: AbsolutePath) throws -> (AbsolutePath, Graph) {
         // Load

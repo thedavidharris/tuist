@@ -18,7 +18,6 @@ public struct TuistCommand: ParsableCommand {
                                  LintCommand.self,
                                  VersionCommand.self,
                                  BuildCommand.self,
-                                 TestCommand.self,
                                  CacheCommand.self,
                                  CreateIssueCommand.self,
                                  ScaffoldCommand.self,
