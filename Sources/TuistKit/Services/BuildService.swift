@@ -12,7 +12,7 @@ enum BuildServiceError: FatalError {
     var description: String {
         switch self {
         case let .schemeNotFound(scheme, existing):
-            return "Couldn't find scheme \(scheme). The available schemes are: \(existing.joined(separator: ", "))"
+            return "Couldn't find scheme \(scheme). The available schemes are: \(existing.joined(separator: ", "))."
         }
     }
 

@@ -18,7 +18,7 @@ struct BuildCommand: ParsableCommand {
         help: "Force the generation of the project before building."
     )
     var generate: Bool
-    
+
     @Option(
         name: .shortAndLong,
         help: "The path to the directory that contains the project to be built."
