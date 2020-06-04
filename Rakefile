@@ -127,16 +127,16 @@ def release
 
   print_section("Uploading to the tuist-releases bucket on GCS")
 
-  bucket.create_file("build/tuist.zip", "#{version}/tuist.zip").acl.public!
-  bucket.create_file("build/tuistenv.zip", "#{version}/tuistenv.zip").acl.public!
+  # bucket.create_file("build/tuist.zip", "#{version}/tuist.zip").acl.public!
+  # bucket.create_file("build/tuistenv.zip", "#{version}/tuistenv.zip").acl.public!
 
-  bucket.create_file("build/tuist.zip", "latest/tuist.zip").acl.public!
-  bucket.create_file("build/tuistenv.zip", "latest/tuistenv.zip").acl.public!
-  Dir.mktmpdir do |tmp_dir|
-    version_path = File.join(tmp_dir, "version")
-    File.write(version_path, version)
-    bucket.create_file(version_path, "latest/version").acl.public!
-  end
+  # bucket.create_file("build/tuist.zip", "latest/tuist.zip").acl.public!
+  # bucket.create_file("build/tuistenv.zip", "latest/tuistenv.zip").acl.public!
+  # Dir.mktmpdir do |tmp_dir|
+  #   version_path = File.join(tmp_dir, "version")
+  #   File.write(version_path, version)
+  #   bucket.create_file(version_path, "latest/version").acl.public!
+  # end
 end
 
 def system(*args)

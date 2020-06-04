@@ -5,7 +5,7 @@ import TuistCore
 import TuistAutomation
 import RxBlocking
 
-enum BuildServiceError: FatalError {
+enum TestServiceError: FatalError {
     
     case schemeNotFound(scheme: String, existing: [String])
     
@@ -26,7 +26,7 @@ enum BuildServiceError: FatalError {
     }
 }
 
-final class BuildService {
+final class TestService {
     
     /// Project generator
     let projectGenerator: ProjectGenerating
@@ -48,18 +48,18 @@ final class BuildService {
             graph = try self.projectGenerator.load(path: FileHandler.shared.currentPath)
         }
         
-        let buildableSchemes = self.buildableSchemes(graph: graph)
-        logger.log(level: .notice, "Found the following buildable schemes: \(buildableSchemes.map(\.name).joined(separator: ", "))")
+        let testableSchemes = self.testableSchemes(graph: graph)
+        logger.log(level: .notice, "Found the following testable schemes: \(testableSchemes.map(\.name).joined(separator: ", "))")
         var cleaned: Bool = false
         
-        func buildScheme(scheme: Scheme) throws {
-            logger.log(level: .notice, "Building scheme \(scheme.name)", metadata: .section)
-            let buildableTarget = self.buildableTarget(scheme: scheme, graph: graph)
-            _ = try xcodebuildController.build(.workspace(workspacePath()!),
+        func testScheme(scheme: Scheme) throws {
+            logger.log(level: .notice, "Testing scheme \(scheme.name)", metadata: .section)
+            let tesatbleTarget = self.testableTarget(scheme: scheme, graph: graph)
+            _ = try xcodebuildController.test(.workspace(workspacePath()!),
                                                scheme: scheme.name,
                                                clean: cleaned == false,
                                                arguments: [
-                                                .sdk(buildableTarget.platform.xcodeSimulatorSDK!)
+                                                .sdk(tesatbleTarget.platform.xcodeSimulatorSDK!)
             ])
                 .printFormattedOutput()
                 .toBlocking()
@@ -68,30 +68,30 @@ final class BuildService {
         }
         
         if let schemeName = schemeName {
-            guard let scheme = buildableSchemes.first(where: { $0.name == schemeName }) else {
-                throw BuildServiceError.schemeNotFound(scheme: schemeName, existing: buildableSchemes.map(\.name))
+            guard let scheme = testableSchemes.first(where: { $0.name == schemeName }) else {
+                throw TestServiceError.schemeNotFound(scheme: schemeName, existing: testableSchemes.map(\.name))
             }
-            try buildScheme(scheme: scheme)
+            try testScheme(scheme: scheme)
         } else {
-            try buildableSchemes.forEach(buildScheme)
+            try testableSchemes.forEach(testScheme)
         }
         
         
-        logger.log(level: .notice, "The project built successfully", metadata: .success)
+        logger.log(level: .notice, "The project tests ran successfully", metadata: .success)
     }
     
     // MARK: - Fileprivate
     
-    fileprivate func buildableTarget(scheme: Scheme, graph: Graph) -> Target {
-        let buildTarget = scheme.buildAction!.targets.first!
-        return graph.target(path: buildTarget.projectPath, name: buildTarget.name)!.target
+    fileprivate func testableTarget(scheme: Scheme, graph: Graph) -> Target {
+        let target = scheme.testAction!.targets.first!.target
+        return graph.target(path: target.projectPath, name: target.name)!.target
     }
     
-    fileprivate func buildableSchemes(graph: Graph) -> [Scheme] {
+    fileprivate func testableSchemes(graph: Graph) -> [Scheme] {
         let projects = Set(graph.entryNodes.compactMap({ ($0 as? TargetNode)?.project }))
         return projects
             .flatMap({ $0.schemes })
-            .filter({ $0.buildAction?.targets.count != 0 })
+            .filter({ $0.testAction?.targets.count != 0 })
             .sorted(by: { $0.name < $1.name })
     }
     

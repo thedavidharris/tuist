@@ -14,6 +14,6 @@ struct BuildCommand: ParsableCommand {
     var scheme: String?
 
     func run() throws {
-        try BuildService().run(scheme: scheme)
+        try BuildService().run(schemeName: scheme)
     }
 }
