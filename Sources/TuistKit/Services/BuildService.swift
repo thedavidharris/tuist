@@ -62,9 +62,7 @@ final class BuildService {
             _ = try xcodebuildController.build(.workspace(workspacePath),
                                                scheme: scheme.name,
                                                clean: cleaned == false,
-                                               arguments: [
-                                                   .sdk(buildableTarget.platform.xcodeSimulatorSDK!),
-                                               ])
+                                               arguments: buildGraphInspector.buildArguments(target: buildableTarget))
                 .printFormattedOutput()
                 .toBlocking()
                 .last()

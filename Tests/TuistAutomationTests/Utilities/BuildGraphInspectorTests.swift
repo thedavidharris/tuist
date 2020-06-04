@@ -21,6 +21,58 @@ final class BuildGraphInspectorTests: TuistUnitTestCase {
         subject = nil
     }
 
+    func test_buildArguments_when_macOS() throws {
+        // Given
+        let target = Target.test(platform: .macOS)
+
+        // When
+        let got = subject.buildArguments(target: target)
+
+        // Then
+        XCTAssertEqual(got, [
+            .sdk(Platform.macOS.xcodeDeviceSDK),
+        ])
+    }
+
+    func test_buildArguments_when_iOS() throws {
+        // Given
+        let target = Target.test(platform: .iOS)
+
+        // When
+        let got = subject.buildArguments(target: target)
+
+        // Then
+        XCTAssertEqual(got, [
+            .sdk(Platform.iOS.xcodeSimulatorSDK!),
+        ])
+    }
+
+    func test_buildArguments_when_watchOS() throws {
+        // Given
+        let target = Target.test(platform: .watchOS)
+
+        // When
+        let got = subject.buildArguments(target: target)
+
+        // Then
+        XCTAssertEqual(got, [
+            .sdk(Platform.watchOS.xcodeSimulatorSDK!),
+        ])
+    }
+
+    func test_buildArguments_when_tvOS() throws {
+        // Given
+        let target = Target.test(platform: .tvOS)
+
+        // When
+        let got = subject.buildArguments(target: target)
+
+        // Then
+        XCTAssertEqual(got, [
+            .sdk(Platform.tvOS.xcodeSimulatorSDK!),
+        ])
+    }
+
     func test_buildableTarget() throws {
         // Given
         let path = try temporaryPath()

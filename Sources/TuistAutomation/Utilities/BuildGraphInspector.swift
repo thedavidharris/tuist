@@ -3,6 +3,10 @@ import TSCBasic
 import TuistCore
 
 public protocol BuildGraphInspecting {
+    /// Returns the build arguments to be used with the given target.
+    /// - Parameter target: Target whose build arguments will be returned.
+    func buildArguments(target: Target) -> [XcodeBuildArgument]
+
     /// Given a directory, it returns the first .xcworkspace found.
     /// - Parameter path: Found .xcworkspace.
     func workspacePath(directory: AbsolutePath) -> AbsolutePath?
@@ -20,6 +24,16 @@ public protocol BuildGraphInspecting {
 
 public class BuildGraphInspector: BuildGraphInspecting {
     public init() {}
+
+    public func buildArguments(target: Target) -> [XcodeBuildArgument] {
+        var arguments: [XcodeBuildArgument] = []
+        if target.platform == .macOS {
+            arguments.append(.sdk(target.platform.xcodeDeviceSDK))
+        } else {
+            arguments.append(.sdk(target.platform.xcodeSimulatorSDK!))
+        }
+        return arguments
+    }
 
     public func buildableTarget(scheme: Scheme, graph: Graph) -> Target {
         if scheme.buildAction?.targets.count == 0 {
